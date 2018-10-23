@@ -1,20 +1,44 @@
+
+# coding: utf-8
+
+# In[38]:
+
+
 import csv
 import re
+import codecs
 
-TRAIN_DATA="./GOLD/Subtask_A/twitter-2013train-A.txt"
-TEST_DATA="./GOLD/Subtask_A/twitter-2013test-A.txt"
-DEV_DATA="./GOLD/Subtask_A/twitter-2013dev-A.txt"
+
+# In[39]:
+
+
+TRAIN_DATA = "./GOLD/Subtask_A/twitter-2013train-A.txt"
+TEST_DATA = "./GOLD/Subtask_A/twitter-2013test-A.txt"
+DEV_DATA = "./GOLD/Subtask_A/twitter-2013dev-A.txt"
+
+
+# In[44]:
+
 
 trainData = []
 testData = []
 devData = []
 
-with open(TRAIN_DATA) as file:
-    trainData = file.readlines()
-with open(TEST_DATA) as file:
-    testData = file.readlines()
-with open(DEV_DATA) as file:
-    devData = file.readlines()
+def readData(path):
+    data = []
+    with open(path) as file:
+        data = file.read()
+        data = codecs.decode(data, 'unicode_escape')
+        data = data.split('\n')[:-1]
+    return data
+
+trainData = readData(TRAIN_DATA)
+testData = readData(TEST_DATA)
+devData = readData(DEV_DATA)
+
+
+# In[45]:
+
 
 def removePattern(tweet, pattern):
     r = re.findall(pattern, tweet)
@@ -23,12 +47,20 @@ def removePattern(tweet, pattern):
     return tweet 
 
 def preprocess(data):
+    cleanData = []
     for line in data:
-        tId, tSent, tweet = line.split("\t")
-        print(tweet)
-        tweet = removePattern(tweet, "@[\w]*")
-        print(tweet)
-        tweet = tweet.replace("[^a-zA-Z#]", " ")
-        print(tweet)
+        tId, tSent, tweet = line.split("\t") # Splitting by tabspace
+        tweet = removePattern(tweet, "@[\w]*") # Removing @user tags
+        tweet = tweet.replace("[^a-zA-Z#]", " ") # Removing punctuation and special characters
+        tweet = re.sub(r'http[s]?://(?:[a-z]|[0-9]|[$-_@.&amp;+]|[!*\(\),]|(?:%[0-9a-f][0-9a-f]))+',"<URL>", tweet)
+        cleanData.append([tId, tSent, tweet])
+    return cleanData
 
-preprocess(trainData)
+
+# In[46]:
+
+
+trainData = preprocess(trainData)
+testData = preprocess(testData)
+devData = preprocess(devData)
+
